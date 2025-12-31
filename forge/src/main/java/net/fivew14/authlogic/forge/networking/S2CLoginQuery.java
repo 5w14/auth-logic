@@ -1,6 +1,7 @@
 package net.fivew14.authlogic.forge.networking;
 
 import com.mojang.logging.LogUtils;
+import net.fivew14.authlogic.AuthLogic;
 import net.fivew14.authlogic.client.AuthLogicClient;
 import net.fivew14.authlogic.server.ServerNetworking;
 import net.fivew14.authlogic.verification.VerificationException;
@@ -65,8 +66,9 @@ public final class S2CLoginQuery implements IntSupplier {
      * state generation at serialization time.
      */
     public static List<Pair<String, S2CLoginQuery>> buildServerQuery(boolean isLocal) {
-        if (isLocal) {
-            // Skip authentication for local/singleplayer
+        if (isLocal || AuthLogic.isIntegratedServer()) {
+            // Skip authentication for local/singleplayer/integrated server
+            LOGGER.debug("Skipping authentication query for local/integrated server");
             return java.util.Collections.emptyList();
         }
         

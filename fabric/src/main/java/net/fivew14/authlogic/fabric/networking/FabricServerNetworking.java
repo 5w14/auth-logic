@@ -36,8 +36,9 @@ public class FabricServerNetworking {
         PacketSender packetSender, 
         ServerLoginNetworking.LoginSynchronizer loginSynchronizer
     ) {
-        // No need for verification for singleplayer servers.
-        if (server.isSingleplayer()) {
+        // No need for verification for singleplayer/integrated servers.
+        if (server.isSingleplayer() || AuthLogic.isIntegratedServer()) {
+            LOGGER.debug("Skipping authentication query for singleplayer/integrated server");
             return;
         }
 

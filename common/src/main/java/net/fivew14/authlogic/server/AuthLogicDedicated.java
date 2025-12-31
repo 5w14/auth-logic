@@ -3,6 +3,8 @@ package net.fivew14.authlogic.server;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.mojang.brigadier.suggestion.Suggestions;
+import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import com.mojang.logging.LogUtils;
 import dev.architectury.event.events.common.CommandRegistrationEvent;
 import dev.architectury.event.events.common.LifecycleEvent;
@@ -20,6 +22,7 @@ import org.slf4j.Logger;
 import java.io.IOException;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 public class AuthLogicDedicated {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -58,14 +61,16 @@ public class AuthLogicDedicated {
         dispatcher.register(
             Commands.literal("authlogic")
                 .requires(source -> source.hasPermission(3)) // Require OP level 3
-                .then(Commands.literal("resetkey")
+                .then(Commands.literal("reset")
                     .then(Commands.argument("player", StringArgumentType.word())
+                            .suggests(AuthLogicDedicated::getSuggestions)
                         .executes(AuthLogicDedicated::executeResetKey)))
                 .then(Commands.literal("list")
                     .executes(AuthLogicDedicated::executeListPlayers))
                 .then(Commands.literal("status")
                     .executes(AuthLogicDedicated::executeStatus))
         );
+
     }
     
     /**
@@ -226,5 +231,26 @@ public class AuthLogicDedicated {
 
     public static boolean isActive() {
         return isActive;
+    }
+
+    private static CompletableFuture<Suggestions> getSuggestions(CommandContext<CommandSourceStack> ctx, SuggestionsBuilder sugg) {
+        ServerStorage storage = AuthLogic.getServerStorage();
+        Set<UUID> registeredPlayers = storage.getRegisteredPlayers();
+
+        for (UUID uuid : registeredPlayers) {
+            String playerName = null;
+
+            if (server != null) {
+                ServerPlayer player = server.getPlayerList().getPlayer(uuid);
+                if (player != null) {
+                    playerName = player.getName().getString();
+                }
+            }
+
+            if (playerName != null)
+                sugg.suggest(playerName);
+        }
+
+        return sugg.buildFuture();
     }
 }

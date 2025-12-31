@@ -1,6 +1,7 @@
 package net.fivew14.authlogic;
 
 import com.mojang.logging.LogUtils;
+import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.utils.Env;
 import net.fivew14.authlogic.client.AuthLogicClient;
@@ -12,6 +13,7 @@ import net.fivew14.authlogic.verification.VerificationRegistry;
 import net.fivew14.authlogic.verification.codecs.OfflineVerificationCodec;
 import net.fivew14.authlogic.verification.codecs.OnlineVerificationCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import org.slf4j.Logger;
 
 /**
@@ -24,6 +26,7 @@ public final class AuthLogic {
     private static final Logger LOGGER = LogUtils.getLogger();
     
     private static ServerStorage serverStorage;
+    private static boolean isIntegratedServer = false;
 
     /**
      * Initializes the mod.
@@ -43,10 +46,37 @@ public final class AuthLogic {
         if (Platform.getEnvironment() == Env.SERVER) {
             initServerStorage();
             AuthLogicDedicated.onDedicatedStartup();
+        } else {
+            // On client, register for server starting event to handle integrated servers
+            LifecycleEvent.SERVER_STARTING.register(AuthLogic::onServerStarting);
+            LifecycleEvent.SERVER_STOPPED.register(AuthLogic::onServerStopped);
         }
         
         LOGGER.info("AuthLogic initialized successfully with {} verification codecs",
             VerificationRegistry.getRegisteredTypes().size());
+    }
+    
+    /**
+     * Called when a server is starting (including integrated servers).
+     */
+    private static void onServerStarting(MinecraftServer server) {
+        if (server.isSingleplayer()) {
+            LOGGER.info("Integrated server starting - authentication disabled for local connections");
+            isIntegratedServer = true;
+            // Still initialize storage in case it's opened to LAN
+            initServerStorage();
+        }
+    }
+    
+    /**
+     * Called when a server stops.
+     */
+    private static void onServerStopped(MinecraftServer server) {
+        if (isIntegratedServer) {
+            LOGGER.info("Integrated server stopped");
+            isIntegratedServer = false;
+            serverStorage = null;
+        }
     }
     
     /**
@@ -98,6 +128,15 @@ public final class AuthLogic {
 
     public static boolean isOnDedicated() {
         return AuthLogicDedicated.isRunningDedicated();
+    }
+    
+    /**
+     * Checks if an integrated (singleplayer) server is currently running.
+     * 
+     * @return true if an integrated server is active
+     */
+    public static boolean isIntegratedServer() {
+        return isIntegratedServer;
     }
 
     public static ResourceLocation id(String location) {
