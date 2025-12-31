@@ -14,9 +14,6 @@ public class KeysProvider {
         try {
             tempKeyGenerator = KeyPairGenerator.getInstance("X25519");
             constantKeyGenerator = KeyPairGenerator.getInstance("RSA");
-
-            LogUtils.getLogger().info("NewTempKeyPub: {}", tempKeyGenerator.generateKeyPair().getPublic().getEncoded());
-            LogUtils.getLogger().info("NewConstKeyPub: {}", constantKeyGenerator.generateKeyPair().getPublic().getEncoded());
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("Could not create a key generator", e);
         }
@@ -39,6 +36,15 @@ public class KeysProvider {
         } catch (NoSuchAlgorithmException | InvalidKeyException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Generates a cryptographically secure random nonce.
+     * 
+     * @return Random long value for use as nonce
+     */
+    public static long generateNonce() {
+        return new SecureRandom().nextLong();
     }
 
     public static void bootstrap() { }

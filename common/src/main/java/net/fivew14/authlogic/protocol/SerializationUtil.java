@@ -1,0 +1,227 @@
+package net.fivew14.authlogic.protocol;
+
+import net.minecraft.network.FriendlyByteBuf;
+
+import java.nio.ByteBuffer;
+import java.security.*;
+import java.security.spec.*;
+
+/**
+ * Utility class for serializing and deserializing protocol message components.
+ * 
+ * Most serialization is now handled directly by FriendlyByteBuf:
+ * - writePublicKey() / readPublicKey() for RSA keys
+ * - writeUUID() / readUUID() for UUIDs  
+ * - writeUtf() / readUtf() for strings
+ * - writeLong() / readLong() for longs
+ * - writeByteArray() / readByteArray() for byte arrays
+ * 
+ * This class provides additional utilities for:
+ * - X25519 keys (FriendlyByteBuf only handles RSA)
+ * - Private key serialization
+ * - ByteBuffer-based operations for legacy code
+ */
+public class SerializationUtil {
+
+    // ==================== X25519 Key Serialization ====================
+    // FriendlyByteBuf.readPublicKey() only handles RSA, so we need custom X25519 handling
+    
+    /**
+     * Writes an X25519 public key to a FriendlyByteBuf.
+     * 
+     * @param buf Buffer to write to
+     * @param key X25519 public key
+     */
+    public static void writeX25519PublicKey(FriendlyByteBuf buf, PublicKey key) {
+        buf.writeByteArray(key.getEncoded());
+    }
+
+    /**
+     * Reads an X25519 public key from a FriendlyByteBuf.
+     * 
+     * @param buf Buffer to read from
+     * @return X25519 public key
+     */
+    public static PublicKey readX25519PublicKey(FriendlyByteBuf buf) {
+        byte[] keyBytes = buf.readByteArray();
+        return deserializePublicKey(keyBytes, "X25519");
+    }
+
+    // ==================== Private Key Serialization ====================
+    
+    /**
+     * Serializes a private key to bytes.
+     * 
+     * @param key Private key (RSA or X25519)
+     * @return Encoded key bytes
+     */
+    public static byte[] serializePrivateKey(PrivateKey key) {
+        return key.getEncoded();
+    }
+
+    /**
+     * Deserializes a private key from bytes.
+     * 
+     * @param data Encoded key bytes
+     * @param algorithm "RSA" or "X25519"
+     * @return Private key
+     * @throws RuntimeException if deserialization fails
+     */
+    public static PrivateKey deserializePrivateKey(byte[] data, String algorithm) {
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+            PKCS8EncodedKeySpec keySpec = new PKCS8EncodedKeySpec(data);
+            return keyFactory.generatePrivate(keySpec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize private key for algorithm: " + algorithm, e);
+        }
+    }
+
+    // ==================== Public Key Deserialization ====================
+    
+    /**
+     * Deserializes a public key from bytes.
+     * 
+     * @param data Encoded key bytes
+     * @param algorithm "RSA" or "X25519"
+     * @return Public key
+     * @throws RuntimeException if deserialization fails
+     */
+    public static PublicKey deserializePublicKey(byte[] data, String algorithm) {
+        try {
+            KeyFactory keyFactory = KeyFactory.getInstance(algorithm);
+            X509EncodedKeySpec keySpec = new X509EncodedKeySpec(data);
+            return keyFactory.generatePublic(keySpec);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to deserialize public key for algorithm: " + algorithm, e);
+        }
+    }
+
+    // ==================== Legacy ByteBuffer Methods ====================
+    // These are kept for backward compatibility with existing code using ByteBuffer
+    
+    /**
+     * Serializes a public key to bytes.
+     * 
+     * @param key Public key (RSA or X25519)
+     * @return Encoded key bytes
+     */
+    public static byte[] serializePublicKey(PublicKey key) {
+        return key.getEncoded();
+    }
+
+    /**
+     * Serializes a long to 8 bytes.
+     * Used for signature generation where we need raw bytes.
+     * 
+     * @param value Long value
+     * @return 8-byte array
+     */
+    public static byte[] serializeLong(long value) {
+        ByteBuffer buffer = ByteBuffer.allocate(8);
+        buffer.putLong(value);
+        return buffer.array();
+    }
+
+    /**
+     * Serializes a UUID to 16 bytes.
+     * Used for signature generation where we need raw bytes.
+     * 
+     * @param uuid UUID to serialize
+     * @return 16-byte array
+     */
+    public static byte[] serializeUUID(java.util.UUID uuid) {
+        ByteBuffer buffer = ByteBuffer.allocate(16);
+        buffer.putLong(uuid.getMostSignificantBits());
+        buffer.putLong(uuid.getLeastSignificantBits());
+        return buffer.array();
+    }
+
+    /**
+     * Deserializes a UUID from a ByteBuffer (advances buffer position).
+     * 
+     * @param buffer ByteBuffer to read from
+     * @return UUID
+     */
+    public static java.util.UUID deserializeUUID(ByteBuffer buffer) {
+        long mostSigBits = buffer.getLong();
+        long leastSigBits = buffer.getLong();
+        return new java.util.UUID(mostSigBits, leastSigBits);
+    }
+
+    /**
+     * Serializes a string with length prefix (4 bytes) + UTF-8 bytes.
+     * Used for signature generation where we need raw bytes.
+     * 
+     * @param str String to serialize
+     * @return Length-prefixed string bytes
+     */
+    public static byte[] serializeString(String str) {
+        byte[] strBytes = str.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        ByteBuffer buffer = ByteBuffer.allocate(4 + strBytes.length);
+        buffer.putInt(strBytes.length);
+        buffer.put(strBytes);
+        return buffer.array();
+    }
+
+    /**
+     * Deserializes a string from a ByteBuffer (advances buffer position).
+     * 
+     * @param buffer ByteBuffer to read from
+     * @return Deserialized string
+     */
+    public static String deserializeString(ByteBuffer buffer) {
+        int length = buffer.getInt();
+        byte[] strBytes = new byte[length];
+        buffer.get(strBytes);
+        return new String(strBytes, java.nio.charset.StandardCharsets.UTF_8);
+    }
+
+    /**
+     * Reads a length-prefixed byte array from a ByteBuffer.
+     * 
+     * @param buffer ByteBuffer to read from
+     * @return Deserialized byte array
+     */
+    public static byte[] deserializeBytes(ByteBuffer buffer) {
+        int length = buffer.getInt();
+        byte[] data = new byte[length];
+        buffer.get(data);
+        return data;
+    }
+
+    /**
+     * Reads a public key from a ByteBuffer with length prefix.
+     * 
+     * @param buffer ByteBuffer to read from
+     * @param algorithm "RSA" or "X25519"
+     * @return Public key
+     */
+    public static PublicKey readPublicKey(ByteBuffer buffer, String algorithm) {
+        int length = buffer.getInt();
+        byte[] keyBytes = new byte[length];
+        buffer.get(keyBytes);
+        return deserializePublicKey(keyBytes, algorithm);
+    }
+
+    /**
+     * Concatenates multiple byte arrays into one.
+     * Used for building signature payloads.
+     * 
+     * @param arrays Arrays to concatenate
+     * @return Concatenated byte array
+     */
+    public static byte[] concat(byte[]... arrays) {
+        int totalLength = 0;
+        for (byte[] array : arrays) {
+            totalLength += array.length;
+        }
+        
+        ByteBuffer buffer = ByteBuffer.allocate(totalLength);
+        for (byte[] array : arrays) {
+            buffer.put(array);
+        }
+        
+        return buffer.array();
+    }
+}

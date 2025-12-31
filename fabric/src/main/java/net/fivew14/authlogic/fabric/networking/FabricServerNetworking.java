@@ -1,35 +1,80 @@
 package net.fivew14.authlogic.fabric.networking;
 
 
-import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking;
+import com.mojang.logging.LogUtils;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.fivew14.authlogic.AuthLogic;
 import net.fivew14.authlogic.server.ServerNetworking;
+import net.fivew14.authlogic.verification.VerificationException;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerLoginPacketListenerImpl;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+/**
+ * Fabric server-side networking for AuthLogic authentication.
+ * 
+ * Authentication state correlation is handled at the protocol level using
+ * the server nonce, so no connection ID management is needed here.
+ */
 public class FabricServerNetworking {
-    private static final Logger log = LoggerFactory.getLogger(FabricServerNetworking.class);
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     public static void bootstrap() {
         ServerLoginNetworking.registerGlobalReceiver(AuthLogic.NETWORKING_CHANNEL_ID, FabricServerNetworking::handleServer);
         ServerLoginConnectionEvents.QUERY_START.register(FabricServerNetworking::sendQueryToClient);
     }
 
-    private static void sendQueryToClient(ServerLoginPacketListenerImpl serverLoginPacketListener, MinecraftServer server, PacketSender packetSender, ServerLoginNetworking.LoginSynchronizer loginSynchronizer) {
+    private static void sendQueryToClient(
+        ServerLoginPacketListenerImpl handler, 
+        MinecraftServer server, 
+        PacketSender packetSender, 
+        ServerLoginNetworking.LoginSynchronizer loginSynchronizer
+    ) {
         // No need for verification for singleplayer servers.
-        if (server.isSingleplayer())
+        if (server.isSingleplayer()) {
             return;
+        }
 
-        packetSender.sendPacket(AuthLogic.NETWORKING_CHANNEL_ID, ServerNetworking.getServerQuery());
+        try {
+            // Server nonce is used for correlation - no connection ID needed
+            FriendlyByteBuf query = ServerNetworking.getServerQuery();
+            packetSender.sendPacket(AuthLogic.NETWORKING_CHANNEL_ID, query);
+            LOGGER.debug("Sent authentication query to client");
+        } catch (Exception e) {
+            LOGGER.error("Failed to send authentication query", e);
+            handler.disconnect(Component.literal("Authentication error: " + e.getMessage()));
+        }
     }
 
-    private static void handleServer(MinecraftServer server, ServerLoginPacketListenerImpl serverLoginPacketListener, boolean b, FriendlyByteBuf friendlyByteBuf, ServerLoginNetworking.LoginSynchronizer loginSynchronizer, PacketSender packetSender) {
-        ServerNetworking.validateClientResponse(friendlyByteBuf, serverLoginPacketListener::getUserName);
+    private static void handleServer(
+        MinecraftServer server, 
+        ServerLoginPacketListenerImpl handler, 
+        boolean understood, 
+        FriendlyByteBuf buf, 
+        ServerLoginNetworking.LoginSynchronizer synchronizer, 
+        PacketSender packetSender
+    ) {
+        if (!understood) {
+            LOGGER.warn("Client did not understand authentication query");
+            handler.disconnect(Component.literal("Client does not support AuthLogic authentication"));
+            return;
+        }
+        
+        try {
+            // Validate client response - correlation is by server nonce in the response
+            ServerNetworking.validateClientResponse(buf, handler::getUserName);
+            LOGGER.info("Client authenticated successfully: {}", handler.getUserName());
+            
+        } catch (VerificationException e) {
+            LOGGER.error("Client authentication failed: {}", e.getMessage());
+            handler.disconnect(Component.literal("Authentication failed: " + e.getMessage()));
+        } catch (Exception e) {
+            LOGGER.error("Unexpected error during authentication", e);
+            handler.disconnect(Component.literal("Authentication error: " + e.getMessage()));
+        }
     }
 }
