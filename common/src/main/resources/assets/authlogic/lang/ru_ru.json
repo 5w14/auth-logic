@@ -16,7 +16,7 @@
   "authlogic.error.verification_type_not_registered": "Сервер запросил неизвестный метод аутентификации: %s",
   "authlogic.error.internal_client": "Произошла внутренняя ошибка при аутентификации. Попробуйте снова.",
   "authlogic.screen.setup_password.title": "Настройка пароля AuthLogic",
-  "authlogic.screen.setup_password.description": "Этот пароль будет использоваться для генерации уникального ключа для каждого сервера.",
+  "authlogic.screen.setup_password.description": "Пароль будет использован для создания уникальных ключей для серверов.",
   "authlogic.screen.setup_password.warning": "Внимание: Вы не сможете восстановить этот пароль!",
   "authlogic.screen.setup_password.button.save": "Сохранить",
   "authlogic.screen.setup_password.button.cancel": "Отмена",
