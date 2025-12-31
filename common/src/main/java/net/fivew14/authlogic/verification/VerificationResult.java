@@ -22,15 +22,26 @@ public class VerificationResult {
      */
     public final boolean shouldStoreKeyForTOFU;
     
+    /**
+     * Whether this authentication used online mode (Mojang-verified).
+     * 
+     * - true: player authenticated with Mojang certificate (online mode)
+     * - false: player authenticated with password-derived key (offline mode)
+     * 
+     * This is used to prevent offline-mode impersonation of online-mode players.
+     */
+    public final boolean isOnlineMode;
+    
     private VerificationResult(boolean success, UUID playerUUID, String username,
                                PublicKey clientPublicKey, String failureReason,
-                               boolean shouldStoreKeyForTOFU) {
+                               boolean shouldStoreKeyForTOFU, boolean isOnlineMode) {
         this.success = success;
         this.playerUUID = playerUUID;
         this.username = username;
         this.clientPublicKey = clientPublicKey;
         this.failureReason = failureReason;
         this.shouldStoreKeyForTOFU = shouldStoreKeyForTOFU;
+        this.isOnlineMode = isOnlineMode;
     }
     
     /**
@@ -43,12 +54,13 @@ public class VerificationResult {
      * @return Success result
      */
     public static VerificationResult successOffline(UUID uuid, String username, PublicKey key) {
-        return new VerificationResult(true, uuid, username, key, null, true);
+        return new VerificationResult(true, uuid, username, key, null, true, false);
     }
     
     /**
      * Creates a successful verification result for online mode.
      * The public key will NOT be stored for TOFU (Mojang certificates can rotate).
+     * The username will be recorded as an online-mode player to prevent impersonation.
      * 
      * @param uuid Player's UUID
      * @param username Player's username
@@ -56,7 +68,7 @@ public class VerificationResult {
      * @return Success result
      */
     public static VerificationResult successOnline(UUID uuid, String username, PublicKey key) {
-        return new VerificationResult(true, uuid, username, key, null, false);
+        return new VerificationResult(true, uuid, username, key, null, false, true);
     }
     
     /**
@@ -81,6 +93,6 @@ public class VerificationResult {
      * @return Failure result
      */
     public static VerificationResult failure(String reason) {
-        return new VerificationResult(false, null, null, null, reason, false);
+        return new VerificationResult(false, null, null, null, reason, false, false);
     }
 }

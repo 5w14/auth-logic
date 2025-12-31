@@ -165,7 +165,38 @@ public class ServerNetworking {
                 );
             }
             
-            // 7. TOFU check - only for offline mode (password-derived keys)
+            // 7. Auth mode consistency check - prevent offline impersonation of online players
+            // If this username has EVER authenticated via online mode, only online mode is allowed
+            if (getStorage().isOnlineModeUsername(result.username)) {
+                if (!result.isOnlineMode) {
+                    throw new VerificationException(
+                        "Username '" + result.username + "' is registered as an online-mode player. " +
+                        "Offline-mode authentication is not allowed for this username."
+                    );
+                }
+                LOGGER.debug("Verified {} is using online mode as required", result.username);
+            }
+            
+            // 8. Handle online-mode authentication
+            // - Record username as online-mode to prevent future offline impersonation
+            // - Revoke any existing offline claim to this username (Mojang is source of truth)
+            if (result.isOnlineMode) {
+                // Check if there's an existing offline claim to revoke
+                if (getStorage().isOfflineUsername(result.username)) {
+                    getStorage().revokeOfflineUsernameClaim(result.username);
+                    LOGGER.warn("Online-mode player '{}' has taken ownership from a previous offline claim", 
+                        result.username);
+                }
+                
+                // Record as online-mode username
+                if (!getStorage().isOnlineModeUsername(result.username)) {
+                    getStorage().recordOnlineModeUsername(result.username);
+                    LOGGER.info("Recorded new online-mode player: {}", result.username);
+                }
+                getStorage().save();
+            }
+            
+            // 9. TOFU check - only for offline mode (password-derived keys)
             // Online mode keys are Mojang certificates that can be regenerated at any time,
             // so we don't store them for TOFU verification
             if (result.shouldStoreKeyForTOFU) {
@@ -182,7 +213,9 @@ public class ServerNetworking {
                     LOGGER.debug("Player key matches trusted key for {}", result.username);
                 } else {
                     // First time connecting - trust on first use
+                    // Also record the username claim for this UUID
                     getStorage().storePlayerKey(result.playerUUID, result.clientPublicKey);
+                    getStorage().recordOfflineUsername(result.username, result.playerUUID);
                     getStorage().save();
                     LOGGER.info("Trusting new player (offline mode): {} ({})", result.username, result.playerUUID);
                 }
@@ -190,7 +223,7 @@ public class ServerNetworking {
                 LOGGER.debug("Skipping TOFU for online mode user {} ({})", result.username, result.playerUUID);
             }
             
-            // 8. Mark player as authenticated for join verification
+            // 10. Mark player as authenticated for join verification
             // Note: We no longer store the finished state - it's not needed
             ServerAuthState.markAuthenticated(result.username);
             
