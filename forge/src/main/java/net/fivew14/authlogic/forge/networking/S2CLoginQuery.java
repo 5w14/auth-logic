@@ -5,6 +5,7 @@ import io.netty.buffer.ByteBuf;
 import net.fivew14.authlogic.client.ClientNetworking;
 import net.fivew14.authlogic.server.ServerNetworking;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraftforge.network.HandshakeHandler;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -16,20 +17,17 @@ import java.util.function.Supplier;
 public final class S2CLoginQuery implements IntSupplier {
     public static void register(SimpleChannel channel, int packetId) {
         channel.messageBuilder(S2CLoginQuery.class, packetId, NetworkDirection.LOGIN_TO_CLIENT)
-                .encoder(S2CLoginQuery::encode)
-                .decoder(S2CLoginQuery::decode)
-                .consumerNetworkThread(S2CLoginQuery::handle)
-//                .loginIndex(S2CLoginQuery::getLoginIndex, S2CLoginQuery::setLoginIndex)
-//                .markAsLoginPacket()
-                .add();
+                .encoder(S2CLoginQuery::encode).decoder(S2CLoginQuery::decode)
+                .consumerNetworkThread(HandshakeHandler.biConsumerFor(S2CLoginQuery::handle))
+                .loginIndex(S2CLoginQuery::getLoginIndex, S2CLoginQuery::setLoginIndex)
+                .markAsLoginPacket().add();
     }
 
     private int loginIndex; // injected
     private final FriendlyByteBuf payload;
 
-    // Server-side constructor
-    public S2CLoginQuery(FriendlyByteBuf payload) {
-        this.payload = payload;
+    public S2CLoginQuery() {
+        payload = ServerNetworking.getServerQuery();
     }
 
     // Client-side decode constructor (or factory)
@@ -59,11 +57,9 @@ public final class S2CLoginQuery implements IntSupplier {
         return new S2CLoginQuery(-1, payload);
     }
 
-    public static void handle(S2CLoginQuery msg, Supplier<NetworkEvent.Context> ctx) {
-        ctx.get().enqueueWork(() -> {
-            FriendlyByteBuf response = ClientNetworking.handleLoginQuery(msg.payload);
-//            ForgeNetworking.sendLoginReply(msg.getLoginIndex(), response);
-        });
+    public static void handle(HandshakeHandler h, S2CLoginQuery msg, Supplier<NetworkEvent.Context> ctx) {
+        FriendlyByteBuf response = ClientNetworking.handleLoginQuery(msg.payload);
+        ForgeNetworking.CHANNEL.reply(new C2SQueryResponse(response), ctx.get());
         ctx.get().setPacketHandled(true);
     }
 
