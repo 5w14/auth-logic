@@ -12,6 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.simple.SimpleChannel;
@@ -24,8 +25,11 @@ public final class AuthLogicForge {
 
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.addListener(this::clientInit);
+        bus.addListener(this::commonSetup);
+    }
 
-        ForgeNetworking.bootstrap();
+    private void commonSetup(FMLCommonSetupEvent event) {
+        event.enqueueWork(ForgeNetworking::bootstrap);
     }
 
     public void clientInit(FMLClientSetupEvent event) {

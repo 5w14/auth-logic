@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 
 public final class AuthLogic {
     public static final String MOD_ID = "authlogic";
-    public static final ResourceLocation NETWORKING_CHANNEL_ID = AuthLogic.id("login");
+    public static final ResourceLocation NETWORKING_CHANNEL_ID = AuthLogic.id("authlogin");
 
     public static void init() {
         KeysProvider.bootstrap();

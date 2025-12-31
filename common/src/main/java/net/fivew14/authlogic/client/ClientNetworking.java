@@ -16,6 +16,8 @@ public class ClientNetworking {
         //   - client public key
         //   - signature ( client nonce, server nonce, client temp key, server temp key )
 
-        return new FriendlyByteBuf(Unpooled.buffer());
+        buf.readUtf();
+
+        return new FriendlyByteBuf(Unpooled.buffer()).writeUtf("utf8");
     }
 }

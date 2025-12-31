@@ -2,6 +2,7 @@ package net.fivew14.authlogic.server;
 
 import io.netty.buffer.Unpooled;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.ResourceLocation;
 
 public class ServerNetworking {
     public static FriendlyByteBuf getServerQuery() {
@@ -11,10 +12,11 @@ public class ServerNetworking {
         // - nonce
         // - signature (tempkey + nonce)
 
-        return new FriendlyByteBuf(Unpooled.buffer());
+        return new FriendlyByteBuf(Unpooled.buffer()).writeUtf("test");
     }
 
     public static void validateClientResponse(FriendlyByteBuf buf, UsernameGetter usernameGetter) {
+//        var type = new ResourceLocation(buf.readUtf(), buf.readUtf());
     }
 
     @FunctionalInterface
