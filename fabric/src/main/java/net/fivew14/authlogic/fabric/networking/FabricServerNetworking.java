@@ -22,6 +22,10 @@ public class FabricServerNetworking {
     }
 
     private static void sendQueryToClient(ServerLoginPacketListenerImpl serverLoginPacketListener, MinecraftServer server, PacketSender packetSender, ServerLoginNetworking.LoginSynchronizer loginSynchronizer) {
+        // No need for verification for singleplayer servers.
+        if (server.isSingleplayer())
+            return;
+
         packetSender.sendPacket(AuthLogic.NETWORKING_CHANNEL_ID, ServerNetworking.getServerQuery());
     }
 

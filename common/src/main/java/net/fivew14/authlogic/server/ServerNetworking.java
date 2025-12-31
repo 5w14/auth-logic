@@ -6,6 +6,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public class ServerNetworking {
     public static FriendlyByteBuf getServerQuery() {
+//        var reference = ServerAuthState.newAuthState();
+
         // TO SEND:
         // - temp key
         // - const key
@@ -16,6 +18,7 @@ public class ServerNetworking {
     }
 
     public static void validateClientResponse(FriendlyByteBuf buf, UsernameGetter usernameGetter) {
+        buf.readUtf();
 //        var type = new ResourceLocation(buf.readUtf(), buf.readUtf());
     }
 

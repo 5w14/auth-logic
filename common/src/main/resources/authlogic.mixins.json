@@ -6,7 +6,6 @@
   "client": [
   ],
   "mixins": [
-    "LoginPacketAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
