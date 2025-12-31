@@ -3,8 +3,10 @@ package net.fivew14.authlogic.client;
 import com.mojang.logging.LogUtils;
 import dev.architectury.event.events.client.ClientLifecycleEvent;
 import net.fivew14.authlogic.client.ClientNetworking.MojangCertificateData;
+import net.fivew14.authlogic.client.screen.SetupMultiplayerPasswordScreen;
 import net.fivew14.authlogic.verification.VerificationException;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.FriendlyByteBuf;
 import org.slf4j.Logger;
 
@@ -39,12 +41,7 @@ public class AuthLogicClient {
         
         // 2. For environment variable (production-like):
 //        ClientAuthHandler.setPasswordProvider(new ClientAuthHandler.EnvironmentPasswordProvider());
-        
-        // 3. For custom logic:
-        // ClientAuthHandler.setPasswordProvider(new ClientAuthHandler.SupplierPasswordProvider(
-        //     () -> "your_custom_logic", false
-        // ));
-        
+
         ClientLifecycleEvent.CLIENT_STARTED.register(AuthLogicClient::onClientStarted);
     }
 
@@ -159,5 +156,13 @@ public class AuthLogicClient {
         
         LOGGER.info("Successfully generated authentication response for {}", serverAddress);
         return response;
+    }
+
+    public static boolean openSetupMultiplayerScreen(Screen returnTo) {
+        if (getStorage().hasPasswordSaved() || isOnlineMode())
+            return false;
+
+        Minecraft.getInstance().setScreen(new SetupMultiplayerPasswordScreen(returnTo));
+        return true;
     }
 }
