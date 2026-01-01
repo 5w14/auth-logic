@@ -11,13 +11,12 @@ import net.minecraftforge.network.HandshakeHandler;
 import net.minecraftforge.network.NetworkDirection;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.network.simple.SimpleChannel;
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 
 import java.util.List;
 import java.util.function.IntSupplier;
 import java.util.function.Supplier;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 /**
  * Forge client-side handler for server authentication queries.

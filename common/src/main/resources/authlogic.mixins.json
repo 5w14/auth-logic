@@ -5,7 +5,8 @@
   "minVersion": "0.8",
   "client": [
     "ClientHandshakeAccessor",
-    "MultiplayerScreenMixin"
+    "MultiplayerScreenMixin",
+    "PlayerTabOverlayMixin"
   ],
   "mixins": [
     "ServerLoginPacketListenerImplAccessor"

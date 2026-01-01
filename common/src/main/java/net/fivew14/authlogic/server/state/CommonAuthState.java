@@ -4,7 +4,6 @@ import net.fivew14.authlogic.crypto.EncryptionProvider;
 import net.fivew14.authlogic.crypto.KeysProvider;
 import net.fivew14.authlogic.crypto.OptionalKeyPair;
 
-import java.security.KeyPair;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.UUID;

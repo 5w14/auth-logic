@@ -3,13 +3,10 @@ package net.fivew14.authlogic.crypto;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import java.nio.ByteBuffer;
-import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.KeySpec;
-import java.security.spec.RSAKeyGenParameterSpec;
 import java.security.spec.X509EncodedKeySpec;
-import java.math.BigInteger;
 
 /**
  * Derives deterministic RSA keypairs from password hashes and server public keys.

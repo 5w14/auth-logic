@@ -1,7 +1,5 @@
 package net.fivew14.authlogic.crypto;
 
-import com.mojang.logging.LogUtils;
-
 import javax.crypto.KeyAgreement;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.*;

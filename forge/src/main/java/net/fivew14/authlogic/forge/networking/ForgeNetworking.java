@@ -1,9 +1,6 @@
 package net.fivew14.authlogic.forge.networking;
 
-import com.mojang.logging.LogUtils;
 import net.fivew14.authlogic.AuthLogic;
-import net.fivew14.authlogic.forge.AuthLogicForge;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.simple.SimpleChannel;

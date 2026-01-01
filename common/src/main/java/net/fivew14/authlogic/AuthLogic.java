@@ -4,7 +4,6 @@ import com.mojang.logging.LogUtils;
 import dev.architectury.event.events.common.LifecycleEvent;
 import dev.architectury.platform.Platform;
 import dev.architectury.utils.Env;
-import net.fivew14.authlogic.client.AuthLogicClient;
 import net.fivew14.authlogic.crypto.KeysProvider;
 import net.fivew14.authlogic.server.AuthLogicDedicated;
 import net.fivew14.authlogic.server.ServerNetworking;

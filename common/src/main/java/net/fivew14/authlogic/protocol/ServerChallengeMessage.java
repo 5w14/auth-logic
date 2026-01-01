@@ -4,7 +4,8 @@ import net.fivew14.authlogic.crypto.SignatureProvider;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.nio.ByteBuffer;
-import java.security.*;
+import java.security.KeyPair;
+import java.security.PublicKey;
 
 /**
  * Server → Client challenge message.

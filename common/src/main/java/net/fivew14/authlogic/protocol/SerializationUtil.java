@@ -3,8 +3,11 @@ package net.fivew14.authlogic.protocol;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.nio.ByteBuffer;
-import java.security.*;
-import java.security.spec.*;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 
 /**
  * Utility class for serializing and deserializing protocol message components.

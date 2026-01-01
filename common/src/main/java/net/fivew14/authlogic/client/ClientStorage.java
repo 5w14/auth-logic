@@ -1,7 +1,6 @@
 package net.fivew14.authlogic.client;
 
 import com.mojang.logging.LogUtils;
-import net.fivew14.authlogic.crypto.Hasher;
 import net.fivew14.authlogic.crypto.PasswordBasedKeyDerivation;
 import net.fivew14.authlogic.protocol.SerializationUtil;
 import net.fivew14.authlogic.utilities.SavedStorage;
@@ -11,7 +10,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.security.KeyPair;
 import java.security.PublicKey;
-import java.util.*;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Client-side storage for derived keypair and trusted servers.
