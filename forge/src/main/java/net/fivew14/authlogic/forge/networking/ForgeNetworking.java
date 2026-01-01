@@ -10,7 +10,7 @@ public class ForgeNetworking {
     private static final String PROTOCOL = "1";
 
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            AuthLogic.NETWORKING_CHANNEL_ID, () -> PROTOCOL, (a) -> true, (a) -> true
+            AuthLogic.NETWORKING_CHANNEL_ID, () -> PROTOCOL, PROTOCOL::equals, PROTOCOL::equals
     );
 
     public static void bootstrap() {
