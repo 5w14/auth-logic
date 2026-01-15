@@ -2,12 +2,16 @@ package net.fivew14.authlogic.utilities;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.mojang.logging.LogUtils;
+
+import org.slf4j.Logger;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 
 /**
  * Utility class for file-based storage operations.
@@ -23,6 +27,7 @@ import java.nio.file.Paths;
  *   - server_whitelist.json: Whitelist integration
  */
 public class SavedStorage {
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final String CONFIG_DIR = "config/authlogic";
     private static final String ROOT_DIR = "authlogic";
@@ -68,8 +73,9 @@ public class SavedStorage {
     /**
      * Migrates files from config/authlogic/ to root authlogic/ directory.
      * Only migrates if the file doesn't already exist in the root directory.
+     * Thread-safe and idempotent.
      */
-    public static void migrateFilesFromConfig() {
+    public static synchronized void migrateFilesFromConfig() {
         if (hasMigrated) {
             return;
         }
@@ -78,15 +84,21 @@ public class SavedStorage {
         migrateFile(getConfigDir().resolve("server_storage.json"), getRootDir().resolve("server_storage.json"));
         migrateFile(getConfigDir().resolve("client_password.txt"), getRootDir().resolve("client_password.txt"));
         migrateFile(getConfigDir().resolve("client_servers.json"), getRootDir().resolve("client_servers.json"));
-
         hasMigrated = true;
     }
 
     private static void migrateFile(Path oldPath, Path newPath) {
+        boolean oldExists = Files.exists(oldPath);
+        boolean newExists = Files.exists(newPath);
+
+        if (!oldExists || newExists) {
+            return;
+        }
+
         try {
-            if (Files.exists(oldPath) && !Files.exists(newPath)) {
-                Files.copy(oldPath, newPath);
-            }
+            Files.copy(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.delete(oldPath);
+            LOGGER.info("Migrated {} to {}", oldPath, newPath);
         } catch (IOException e) {
             throw new RuntimeException("Failed to migrate file from " + oldPath + " to " + newPath, e);
         }
