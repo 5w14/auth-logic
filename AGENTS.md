@@ -12,6 +12,11 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 - Mojang official mappings
 - Architectury API for platform abstraction
 
+**Modules:**
+- `common/` - Shared logic (crypto, state management, networking interfaces)
+- `fabric/` - Fabric loader implementation
+- `forge/` - Forge loader implementation
+
 ## Build Commands
 
 ```bash
@@ -22,15 +27,30 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 ./gradlew :fabric:build
 ./gradlew :forge:build
 
-# Run with dev environment (for testing in development Minecraft instances)
-./gradlew :fabric:runClient
-./gradlew :forge:runClient
-
 # Clean build artifacts
 ./gradlew clean
 
+# Run with dev environment (opens Minecraft with mod installed)
+./gradlew :fabric:runClient
+./gradlew :forge:runClient
+
 # Build and publish to local maven
 ./gradlew publishToMavenLocal
+
+# Compile classes only (faster than full build)
+./gradlew classes
+
+# Run tests
+./gradlew test
+./gradlew :common:test
+./gradlew :fabric:test
+./gradlew :forge:test
+
+# Run a single test class
+./gradlew test --tests "net.fivew14.authlogic.crypto.*"
+
+# Run a single test method
+./gradlew test --tests "net.fivew14.authlogic.crypto.SomeTest.shouldDoX"
 ```
 
 ## Code Style Guidelines
@@ -40,7 +60,7 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 - Write clear, self-documenting code with descriptive names
 - Add Javadoc comments for public APIs and complex logic
 - Keep methods focused and under 50 lines when possible
-- Use final variables for immutable references
+- Use `final` variables for immutable references
 
 ### Naming Conventions
 
@@ -57,16 +77,17 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 - Use **sealed classes** or **abstract classes** for controlled hierarchies
 - Prefer **static nested classes** over inner classes when they don't need outer instance access
 - Use **var** for local variable type inference when the type is obvious from context
+- Use `CompletableFuture` for async operations (see `MojangProfileFetcher`)
 
 ### Imports
 
-- Group imports in this order:
-  1. Java standard library (`java.*`)
-  2. Minecraft/Forge/Fabric imports (`net.minecraft.*`, `net.fabricmc.*`, etc.)
-  3. Third-party libraries (`com.mojang.*`, `dev.architectury.*`, `org.slf4j.*`)
-  4. Internal project imports (`net.fivew14.authlogic.*`)
+Group imports in this order:
+1. Java standard library (`java.*`, `javax.*`)
+2. Minecraft/Forge/Fabric imports (`net.minecraft.*`, `net.fabricmc.*`, `net.minecraftforge.*`)
+3. Third-party libraries (`com.mojang.*`, `dev.architectury.*`, `org.slf4j.*`, `com.google.gson.*`)
+4. Internal project imports (`net.fivew14.authlogic.*`)
 
-- Avoid wildcard imports except for standard testing imports
+Blank line between groups. Avoid wildcard imports.
 
 ### Formatting
 
@@ -99,6 +120,13 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 - **Provider pattern**: `KeysProvider`, `EncryptionProvider` for crypto operations
 - **Networking**: Platform-specific implementations (`FabricNetworking`, `ForgeNetworking`)
 
+### API Caching
+
+- Profile fetcher: 60-minute cache (`MojangProfileFetcher`)
+- Public key fetcher: 120-minute cache (`MojangPublicKeyFetcher`)
+- Use expired-cache fallback on API failure rather than failing entirely
+- No TTL randomization - use fixed durations for consistency
+
 ### Platform-Specific Code
 
 - Keep common logic in `common/` module
@@ -119,11 +147,13 @@ AuthLogic is a Minecraft mod providing password-based authentication for multipl
 - Use present tense: "Add" not "Added", "Fix" not "Fixed"
 - Reference issue numbers when applicable
 - Keep first line under 50 characters, describe "why" not just "what"
-- Example: "Add timeout cleanup for stale auth states"
+- Example: "Increase Mojang API cache durations to reduce 429 errors"
 
 ### Security Considerations
 
-- Never log passwords or sensitive cryptographic material
+- Never log passwords or sensitive cryptographic material (nonces are OK)
 - Use constant-time comparisons for cryptographic operations where appropriate
 - Validate all external inputs
 - Follow Minecraft mod security best practices for network communications
+- Key derivation must use `DeterministicSecureRandom` for portability
+- RSA keys must be explicitly sized (4096 bits minimum)
