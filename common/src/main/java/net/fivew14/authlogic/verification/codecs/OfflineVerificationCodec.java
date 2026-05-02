@@ -12,7 +12,7 @@ import net.minecraft.resources.ResourceLocation;
  * Type: "authlogic:offline"
  */
 public class OfflineVerificationCodec implements VerificationCodec {
-    private static final ResourceLocation TYPE = new ResourceLocation("authlogic", "offline");
+    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("authlogic", "offline");
 
     @Override
     public VerificationResult verify(byte[] encryptedPayload, CommonAuthState authState)

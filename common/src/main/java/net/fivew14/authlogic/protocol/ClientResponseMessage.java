@@ -91,7 +91,7 @@ public class ClientResponseMessage {
 
         String namespace = SerializationUtil.deserializeString(buffer);
         String path = SerializationUtil.deserializeString(buffer);
-        ResourceLocation type = new ResourceLocation(namespace, path);
+        ResourceLocation type = ResourceLocation.fromNamespaceAndPath(namespace, path);
 
         long serverNonce = buffer.getLong();
         long clientNonce = buffer.getLong();

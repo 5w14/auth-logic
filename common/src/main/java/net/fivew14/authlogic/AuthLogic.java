@@ -84,13 +84,13 @@ public final class AuthLogic {
     private static void registerVerificationCodecs() {
         // Register offline mode codec
         VerificationRegistry.register(
-                new ResourceLocation(MOD_ID, "offline"),
+                ResourceLocation.fromNamespaceAndPath(MOD_ID, "offline"),
                 new OfflineVerificationCodec()
         );
 
         // Register online mode codec
         VerificationRegistry.register(
-                new ResourceLocation(MOD_ID, "online"),
+                ResourceLocation.fromNamespaceAndPath(MOD_ID, "online"),
                 new OnlineVerificationCodec()
         );
 
@@ -139,6 +139,6 @@ public final class AuthLogic {
     }
 
     public static ResourceLocation id(String location) {
-        return new ResourceLocation(MOD_ID, location);
+        return ResourceLocation.fromNamespaceAndPath(MOD_ID, location);
     }
 }

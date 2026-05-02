@@ -1,8 +1,6 @@
 package net.fivew14.authlogic.fabric.networking;
 
 import com.mojang.logging.LogUtils;
-import io.netty.util.concurrent.Future;
-import io.netty.util.concurrent.GenericFutureListener;
 import net.fabricmc.fabric.api.client.networking.v1.ClientLoginNetworking;
 import net.fivew14.authlogic.AuthLogic;
 import net.fivew14.authlogic.client.AuthLogicClient;
@@ -15,6 +13,8 @@ import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 import java.util.concurrent.CompletableFuture;
+import net.minecraft.network.PacketSendListener;
+
 import java.util.function.Consumer;
 
 /**
@@ -32,7 +32,7 @@ public class FabricClientNetworking {
             Minecraft minecraft,
             ClientHandshakePacketListenerImpl handler,
             FriendlyByteBuf buf,
-            Consumer<GenericFutureListener<? extends Future<? super Void>>> consumer
+            Consumer<PacketSendListener> consumer
     ) {
         return CompletableFuture.supplyAsync(() -> {
             try {

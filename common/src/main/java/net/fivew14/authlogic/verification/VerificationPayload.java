@@ -15,8 +15,9 @@ public interface VerificationPayload {
     /**
      * The dispatch codec that selects payload type based on the "type" field.
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     Codec<VerificationPayload> DISPATCH_CODEC = VerificationPayloadType.TYPE_CODEC
-            .dispatch("type", VerificationPayload::getType, VerificationPayloadType::codec);
+            .dispatch("type", VerificationPayload::getType, type -> (com.mojang.serialization.MapCodec) type.codec().fieldOf("payload"));
 
     /**
      * Gets the type of this payload.

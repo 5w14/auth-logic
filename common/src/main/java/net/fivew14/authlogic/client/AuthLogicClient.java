@@ -131,9 +131,8 @@ public class AuthLogicClient {
             String serverAddress
     ) throws VerificationException {
         Minecraft minecraft = Minecraft.getInstance();
-        var profile = minecraft.getUser().getGameProfile();
-        var uuid = profile.getId();
-        String username = profile.getName();
+        var uuid = minecraft.getUser().getProfileId();
+        String username = minecraft.getUser().getName();
 
         boolean useOnlineMode = isOnlineMode();
         Optional<MojangCertificateData> mojangCert = getMojangCertificate();

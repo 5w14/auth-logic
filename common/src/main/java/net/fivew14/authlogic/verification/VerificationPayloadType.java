@@ -50,7 +50,7 @@ public enum VerificationPayloadType implements StringRepresentable {
      * @return ResourceLocation
      */
     public ResourceLocation toResourceLocation() {
-        return new ResourceLocation(name);
+        return ResourceLocation.parse(name);
     }
 
     /**

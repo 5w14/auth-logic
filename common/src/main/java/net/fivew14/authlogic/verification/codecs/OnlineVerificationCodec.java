@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
  * - Key expiration check
  */
 public class OnlineVerificationCodec implements VerificationCodec {
-    private static final ResourceLocation TYPE = new ResourceLocation("authlogic", "online");
+    private static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath("authlogic", "online");
 
     @Override
     public VerificationResult verify(byte[] encryptedPayload, CommonAuthState authState)

@@ -1,14 +1,13 @@
 package net.fivew14.authlogic.fabric.networking;
 
 
-import com.mojang.authlib.GameProfile;
 import com.mojang.logging.LogUtils;
 import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.LoginPacketSender;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerLoginNetworking;
 import net.fivew14.authlogic.AuthLogic;
-import net.fivew14.authlogic.mixin.ServerLoginPacketListenerImplAccessor;
 import net.fivew14.authlogic.server.ServerNetworking;
 import net.fivew14.authlogic.verification.VerificationException;
 import net.minecraft.network.FriendlyByteBuf;
@@ -36,7 +35,7 @@ public class FabricServerNetworking {
     private static void sendQueryToClient(
             ServerLoginPacketListenerImpl handler,
             MinecraftServer server,
-            PacketSender packetSender,
+            LoginPacketSender packetSender,
             ServerLoginNetworking.LoginSynchronizer loginSynchronizer
     ) {
         // No need for verification for singleplayer/integrated servers.
@@ -76,8 +75,7 @@ public class FabricServerNetworking {
         buf.readBytes(responseData);
 
         // Get username now on the Netty thread (before async)
-        GameProfile profile = ((ServerLoginPacketListenerImplAccessor) handler).authlogic$getGameProfile();
-        String expectedUsername = profile != null ? profile.getName() : "unknown";
+        String expectedUsername = sanitizeUsername(handler.getUserName());
 
         // Use synchronizer.waitFor() to block login until authentication completes.
         // This is critical because validateClientResponse() may make blocking HTTP calls
@@ -100,5 +98,13 @@ public class FabricServerNetworking {
                 bufCopy.release();
             }
         }));
+    }
+
+    private static String sanitizeUsername(String username) {
+        int addressStart = username.indexOf(" (/");
+        if (addressStart >= 0) {
+            return username.substring(0, addressStart);
+        }
+        return username;
     }
 }

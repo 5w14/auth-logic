@@ -314,7 +314,7 @@ public class ClientNetworking {
                         clientNonce
                 );
                 payload = online;
-                verificationType = new ResourceLocation("authlogic", "online");
+                verificationType = ResourceLocation.fromNamespaceAndPath("authlogic", "online");
             } else {
                 OfflineVerificationPayload offline = OfflineVerificationPayload.create(
                         clientUUID,
@@ -327,7 +327,7 @@ public class ClientNetworking {
                         clientNonce
                 );
                 payload = offline;
-                verificationType = new ResourceLocation("authlogic", "offline");
+                verificationType = ResourceLocation.fromNamespaceAndPath("authlogic", "offline");
             }
 
             // 8. Encrypt payload

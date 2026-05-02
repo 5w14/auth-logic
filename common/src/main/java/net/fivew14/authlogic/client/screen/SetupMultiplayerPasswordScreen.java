@@ -68,7 +68,7 @@ public class SetupMultiplayerPasswordScreen extends Screen {
 
     @Override
     public void render(GuiGraphics guiGraphics, int i, int j, float f) {
-        renderBackground(guiGraphics);
+        renderBackground(guiGraphics, i, j, f);
 
         guiGraphics.drawCenteredString(this.minecraft.font,
                 Component.translatable("authlogic.screen.setup_password.title").withStyle(ChatFormatting.BOLD),
