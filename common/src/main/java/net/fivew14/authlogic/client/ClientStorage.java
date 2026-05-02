@@ -224,7 +224,7 @@ public class ClientStorage {
         if (passwordHash == null || passwordHash.length() != 64) {
             throw new IllegalArgumentException("Must provide SHA-256 hash (64 hex chars)");
         }
-        SavedStorage.writeText(SavedStorage.getClientPasswordPath(), passwordHash);
+        SavedStorage.writePrivateText(SavedStorage.getClientPasswordPath(), passwordHash);
         LOGGER.debug("Saved password hash to disk");
     }
 

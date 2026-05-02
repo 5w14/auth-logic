@@ -12,6 +12,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.FileAttribute;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.Set;
 
 /**
  * Utility class for file-based storage operations.
@@ -80,23 +84,37 @@ public class SavedStorage {
             return;
         }
 
-        migrateFile(getConfigDir().resolve("server_private_key.txt"), getRootDir().resolve("server_private_key.txt"));
+        migratePrivateFile(getConfigDir().resolve("server_private_key.txt"), getRootDir().resolve("server_private_key.txt"));
         migrateFile(getConfigDir().resolve("server_storage.json"), getRootDir().resolve("server_storage.json"));
-        migrateFile(getConfigDir().resolve("client_password.txt"), getRootDir().resolve("client_password.txt"));
+        migratePrivateFile(getConfigDir().resolve("client_password.txt"), getRootDir().resolve("client_password.txt"));
         migrateFile(getConfigDir().resolve("client_servers.json"), getRootDir().resolve("client_servers.json"));
         hasMigrated = true;
     }
 
     private static void migrateFile(Path oldPath, Path newPath) {
+        migrateFile(oldPath, newPath, false);
+    }
+
+    private static void migratePrivateFile(Path oldPath, Path newPath) {
+        migrateFile(oldPath, newPath, true);
+    }
+
+    private static void migrateFile(Path oldPath, Path newPath, boolean privatePermissions) {
         boolean oldExists = Files.exists(oldPath);
         boolean newExists = Files.exists(newPath);
 
         if (!oldExists || newExists) {
+            if (newExists && privatePermissions) {
+                setOwnerOnlyPermissions(newPath);
+            }
             return;
         }
 
         try {
             Files.copy(oldPath, newPath, StandardCopyOption.REPLACE_EXISTING);
+            if (privatePermissions) {
+                setOwnerOnlyPermissions(newPath);
+            }
             Files.delete(oldPath);
             LOGGER.info("Migrated {} to {}", oldPath, newPath);
         } catch (IOException e) {
@@ -201,4 +219,61 @@ public class SavedStorage {
     public static void writeText(Path path, String content) throws IOException {
         Files.writeString(path, content, StandardCharsets.UTF_8);
     }
+
+    /**
+     * Writes sensitive text to a file with owner-only permissions where supported.
+     * On POSIX filesystems this creates/replaces the file as 0600 (rw-------).
+     * On non-POSIX filesystems, falls back to the platform default permissions.
+     *
+     * @param path    File path
+     * @param content Sensitive content to write
+     * @throws IOException if write fails
+     */
+    public static void writePrivateText(Path path, String content) throws IOException {
+        Path parent = path.getParent();
+        if (parent != null) {
+            Files.createDirectories(parent);
+        }
+
+        FileAttribute<Set<PosixFilePermission>> permissions = PosixFilePermissions.asFileAttribute(OWNER_READ_WRITE);
+        Path tempPath;
+        try {
+            tempPath = Files.createTempFile(parent, path.getFileName().toString(), ".tmp", permissions);
+        } catch (UnsupportedOperationException e) {
+            Files.writeString(path, content, StandardCharsets.UTF_8);
+            return;
+        }
+
+        try {
+            Files.writeString(tempPath, content, StandardCharsets.UTF_8);
+            try {
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (IOException e) {
+                Files.move(tempPath, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+            setOwnerOnlyPermissions(path);
+        } finally {
+            Files.deleteIfExists(tempPath);
+        }
+    }
+
+    /**
+     * Restricts a file to owner read/write only where POSIX permissions are supported.
+     *
+     * @param path File path
+     */
+    public static void setOwnerOnlyPermissions(Path path) {
+        try {
+            Files.setPosixFilePermissions(path, OWNER_READ_WRITE);
+        } catch (UnsupportedOperationException e) {
+            LOGGER.debug("POSIX file permissions are not supported for {}", path);
+        } catch (IOException e) {
+            LOGGER.warn("Failed to restrict permissions for {}", path, e);
+        }
+    }
+
+    private static final Set<PosixFilePermission> OWNER_READ_WRITE = Set.of(
+            PosixFilePermission.OWNER_READ,
+            PosixFilePermission.OWNER_WRITE
+    );
 }

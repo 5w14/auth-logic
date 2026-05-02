@@ -259,6 +259,7 @@ public class ServerStorage {
         try {
             if (Files.exists(SavedStorage.getServerPrivateKeyPath())) {
                 // Load existing keypair
+                SavedStorage.setOwnerOnlyPermissions(SavedStorage.getServerPrivateKeyPath());
                 String data = SavedStorage.readText(SavedStorage.getServerPrivateKeyPath());
                 String[] parts = data.split("\n");
                 if (parts.length != 2) {
@@ -285,7 +286,7 @@ public class ServerStorage {
                 String data = Base64.getEncoder().encodeToString(privateKeyBytes) + "\n" +
                         Base64.getEncoder().encodeToString(publicKeyBytes);
 
-                SavedStorage.writeText(SavedStorage.getServerPrivateKeyPath(), data);
+                SavedStorage.writePrivateText(SavedStorage.getServerPrivateKeyPath(), data);
                 LOGGER.info("Generated and saved new server RSA keypair");
             }
 

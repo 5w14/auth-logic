@@ -20,6 +20,6 @@
   "authlogic.screen.setup_password.warning": "Внимание: Вы не сможете восстановить этот пароль!",
   "authlogic.screen.setup_password.button.save": "Сохранить",
   "authlogic.screen.setup_password.button.cancel": "Отмена",
-  "authlogic.screen.setup_password.error.too_short": "Пароль должен быть не менее 4 символов.",
+  "authlogic.screen.setup_password.error.too_short": "Пароль должен быть не менее 8 символов.",
   "authlogic.screen.setup_password.error.save_failed": "Не удалось сохранить пароль: %s"
 }

@@ -20,6 +20,6 @@
   "authlogic.screen.setup_password.warning": "Warning: You cannot restore this password later!",
   "authlogic.screen.setup_password.button.save": "Save",
   "authlogic.screen.setup_password.button.cancel": "Cancel",
-  "authlogic.screen.setup_password.error.too_short": "Password must be at least 4 characters.",
+  "authlogic.screen.setup_password.error.too_short": "Password must be at least 8 characters.",
   "authlogic.screen.setup_password.error.save_failed": "Failed to save password: %s"
 }

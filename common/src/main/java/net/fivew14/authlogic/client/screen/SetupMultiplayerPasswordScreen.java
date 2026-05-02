@@ -42,7 +42,7 @@ public class SetupMultiplayerPasswordScreen extends Screen {
     private void storePassword(Button button) {
         String password = editBox.getValue();
 
-        if (password.length() < 4) {
+        if (password.length() < 8) {
             saveError = Component.translatable("authlogic.screen.setup_password.error.too_short")
                     .withStyle(ChatFormatting.RED);
             return;
