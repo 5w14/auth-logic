@@ -48,4 +48,5 @@ shadowJar {
 
 remapJar {
     input.set shadowJar.archiveFile
+    archiveClassifier = project.name
 }
