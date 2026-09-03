@@ -1,7 +1,6 @@
 package net.fivew14.authlogic.client;
 
 import com.mojang.logging.LogUtils;
-import dev.architectury.event.events.client.ClientLifecycleEvent;
 import net.fivew14.authlogic.client.ClientNetworking.MojangCertificateData;
 import net.fivew14.authlogic.client.screen.SetupMultiplayerPasswordScreen;
 import net.fivew14.authlogic.mixin.MinecraftAccessor;
@@ -20,6 +19,7 @@ public class AuthLogicClient {
     private static ClientStorage clientStorage;
     private static boolean onlineMode = false;
     private static Optional<MojangCertificateData> cachedCertificate = Optional.empty();
+    private static AuthlogicClientConfig currentConfig = AuthlogicClientConfig.create();
 
     public static void onClientInit() {
         LOGGER.info("Initializing AuthLogic client");
@@ -37,14 +37,15 @@ public class AuthLogicClient {
         // Set storage for networking and auth handler
         ClientNetworking.setStorage(clientStorage);
         ClientAuthHandler.setStorage(clientStorage);
-
-        var mc = Minecraft.getInstance();
-        if (((MinecraftAccessor) mc).authlogic$getKeyManager() != null)
-            onClientStarted(mc);
-        else ClientLifecycleEvent.CLIENT_STARTED.register(AuthLogicClient::onClientStarted);
     }
 
-    private static void onClientStarted(Minecraft minecraft) {
+    public static void onClientStarted(Minecraft minecraft) {
+        if (shouldCheckOnlineModeCapabilities())
+            checkOnlineModeCapabilities(Minecraft.getInstance());
+        else LOGGER.info("Skipping check for online capabilities");
+    }
+
+    private static void checkOnlineModeCapabilities(Minecraft minecraft) {
         LOGGER.debug("Client started, checking profile key pair");
         ((MinecraftAccessor) minecraft).authlogic$getKeyManager()
                 .prepareKeyPair().whenComplete((keyPairOpt, e) -> {
@@ -68,6 +69,16 @@ public class AuthLogicClient {
                         LOGGER.debug("Cached Mojang certificate, expires at: {}", publicKeyData.expiresAt());
                     }
                 });
+    }
+
+    private static boolean shouldCheckOnlineModeCapabilities() {
+        if (System.getProperty("AUTHLOGIC_FORCE_OFFLINE", "0").equalsIgnoreCase("1"))
+            return false;
+
+        if (currentConfig.shouldSkipOnlineModeCheck())
+            return false;
+
+        return ((MinecraftAccessor) Minecraft.getInstance()).authlogic$getKeyManager() != null;
     }
 
     /**

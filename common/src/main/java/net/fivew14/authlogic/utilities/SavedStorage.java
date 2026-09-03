@@ -3,7 +3,6 @@ package net.fivew14.authlogic.utilities;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.mojang.logging.LogUtils;
-
 import org.slf4j.Logger;
 
 import java.io.IOException;
@@ -23,12 +22,12 @@ import java.util.Set;
  * <p>
  * Storage locations:
  * - Root authlogic/ directory (key files):
- *   - server_private_key.txt: Server's private key
- *   - server_storage.json: Registered player public keys
- *   - client_password.txt: Client's hashed password
- *   - client_servers.json: Trusted server list
+ * - server_private_key.txt: Server's private key
+ * - server_storage.json: Registered player public keys
+ * - client_password.txt: Client's hashed password
+ * - client_servers.json: Trusted server list
  * - Config authlogic/ directory (configuration):
- *   - server_whitelist.json: Whitelist integration
+ * - server_whitelist.json: Whitelist integration
  */
 public class SavedStorage {
     private static final Logger LOGGER = LogUtils.getLogger();
@@ -165,6 +164,10 @@ public class SavedStorage {
      */
     public static Path getServerWhitelistPath() {
         return getConfigDir().resolve("server_whitelist.json");
+    }
+
+    public static Path getClientConfigPath() {
+        return getConfigDir().resolve("config.json");
     }
 
     /**

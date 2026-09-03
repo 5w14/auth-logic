@@ -3,6 +3,7 @@ package net.fivew14.authlogic.neoforge;
 import net.fivew14.authlogic.AuthLogic;
 import net.fivew14.authlogic.client.AuthLogicClient;
 import net.fivew14.authlogic.neoforge.networking.NeoForgeNetworking;
+import net.minecraft.client.Minecraft;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
@@ -25,5 +26,9 @@ public final class AuthLogicNeoForge {
 
     public void clientInit(FMLClientSetupEvent event) {
         AuthLogicClient.onClientInit();
+
+        // The key manager should be available right away,
+        // this happens much later in the process, compared to fabric
+        AuthLogicClient.onClientStarted(Minecraft.getInstance());
     }
 }
